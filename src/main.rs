@@ -30,7 +30,7 @@ impl File {
 
 fn main() -> io::Result<()> {
 
-    let colors: Colors = Colors::new();
+    let _colors: Colors = Colors::new();
 
     let files = fs::read_dir(".")?.map(|res| res.map(|e| e.path())).collect::<Result<Vec<_>, io::Error>>()?;
     let mut files_list: Vec<File> = Vec::new();
@@ -46,13 +46,17 @@ fn main() -> io::Result<()> {
     };
 
     // print!("{:?}", cwd.meta.permissions().mode());
-    println!("{}Current Dir:{} {}", colors.green, colors.clear, cwd.path);
+    printc!("Current Dir: ", green);
+    println!("{}", cwd.path);
 
-    println!("{}Files in Dir:{}", colors.l_blue, colors.clear);
+    printlnc!("Files in Dir:",  l_blue);
     for file in cwd.files {
         let is_dir = file.meta.is_dir();
-        let color = if is_dir {&colors.purple} else {&colors.clear};
-        println!("{}{}{}", color, &file.file_path, colors.clear);
+        if is_dir {
+            printlnc!(&file.file_path, purple);
+        } else {
+            println!("{}", &file.file_path);
+        }
         // println!("{:?}", &file.meta.is_dir());
     }
 

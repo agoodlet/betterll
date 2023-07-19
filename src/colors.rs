@@ -34,6 +34,16 @@ macro_rules! printlnc {
         println!("{}{}{}", colors.$color , $string, colors.clear);
     };
 }
+
+// non new line macro, might be better to check for optional arg that clears the color at a
+// desired location
+#[macro_export]
+macro_rules! printc {
+    ($string: expr, $color: ident) => {
+        let colors =  Colors::new();
+        print!("{}{}{}", colors.$color, $string,  colors.clear);
+    };
+}
     
 #[macro_export]
 macro_rules! error{
