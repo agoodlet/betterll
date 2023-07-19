@@ -1,11 +1,16 @@
 use std::{fs, env, io, fs::Metadata};
 
+mod colors;
+use colors::Colors;
+
 #[derive(Debug)]
 struct Dir {
     path: String,
     files: Vec<File>,
 }
 
+// TODO rename this struct to something like FileEntry to be more clear that this isn't an object
+// that is a file on the disk, but just the entry of a file for us to display
 #[derive(Debug)]
 struct File {
     file_path: String,
@@ -23,38 +28,10 @@ impl File {
     }
 }
 
-#[allow(dead_code, unused_variables)] 
-struct Colors {
-    black: String,
-    red: String,
-    green: String,
-    yellow: String,
-    d_blue: String,
-    purple: String,
-    l_blue: String,
-    white: String,
-    clear: String,
-}
-
-impl Colors {
-    fn new() -> Colors {
-        Colors {
-            black: "\x1b[30m".to_string(),
-            red: "\x1b[91m".to_string(),
-            green: "\x1b[92m".to_string(),
-            yellow: "\x1b[93m".to_string(),
-            d_blue: "\x1b[94m".to_string(),
-            purple: "\x1b[95m".to_string(),
-            l_blue: "\x1b[96m".to_string(),
-            white: "\x1b[97m".to_string(),
-            clear: "\x1b[0m".to_string(),
-        }
-    }
-}
-
 fn main() -> io::Result<()> {
 
     let colors: Colors = Colors::new();
+
     let files = fs::read_dir(".")?.map(|res| res.map(|e| e.path())).collect::<Result<Vec<_>, io::Error>>()?;
     let mut files_list: Vec<File> = Vec::new();
 
@@ -79,5 +56,6 @@ fn main() -> io::Result<()> {
         // println!("{:?}", &file.meta.is_dir());
     }
 
+    error!("test");
     Ok(())
 }
