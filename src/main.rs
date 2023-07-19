@@ -57,5 +57,6 @@ fn main() -> io::Result<()> {
     }
 
     error!("test");
+    printlnc!("blue", d_blue);
     Ok(())
 }
