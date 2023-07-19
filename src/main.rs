@@ -1,4 +1,4 @@
-use std::{fs, env, io, fs::Metadata};
+use std::{fs, env, io, fs::Metadata, os::unix::prelude::PermissionsExt};
 
 mod colors;
 use colors::Colors;
@@ -30,8 +30,6 @@ impl File {
 
 fn main() -> io::Result<()> {
 
-    let _colors: Colors = Colors::new();
-
     let files = fs::read_dir(".")?.map(|res| res.map(|e| e.path())).collect::<Result<Vec<_>, io::Error>>()?;
     let mut files_list: Vec<File> = Vec::new();
 
@@ -45,7 +43,6 @@ fn main() -> io::Result<()> {
         files: files_list     
     };
 
-    // print!("{:?}", cwd.meta.permissions().mode());
     printc!("Current Dir: ", green);
     println!("{}", cwd.path);
 
@@ -57,10 +54,10 @@ fn main() -> io::Result<()> {
         } else {
             println!("{}", &file.file_path);
         }
-        // println!("{:?}", &file.meta.is_dir());
+        let permissions_decimal = &file.meta.permissions().mode();
+        let permissions_string = String::from(format!("{permissions_decimal:o}"));
+        println!("{}", permissions_string[permissions_string.len() - 3..].to_string());
     }
 
-    error!("test");
-    printlnc!("blue", d_blue);
     Ok(())
 }
