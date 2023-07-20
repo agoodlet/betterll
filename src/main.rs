@@ -48,16 +48,41 @@ fn main() -> io::Result<()> {
 
     printlnc!("Files in Dir:",  l_blue);
     for file in cwd.files {
+        let permissions_decimal = &file.meta.permissions().mode();
+        let permissions_string = String::from(format!("{:b}", &permissions_decimal));
+        print!("{} ", translate_binary_permission(permissions_string[permissions_string.len() - 9..].to_string()));
+
         let is_dir = file.meta.is_dir();
         if is_dir {
             printlnc!(&file.file_path, purple);
         } else {
             println!("{}", &file.file_path);
         }
-        let permissions_decimal = &file.meta.permissions().mode();
-        let permissions_string = String::from(format!("{permissions_decimal:o}"));
-        println!("{}", permissions_string[permissions_string.len() - 3..].to_string());
+
     }
+    
 
     Ok(())
+}
+
+fn translate_binary_permission(permission: String)  -> String {
+    let mut i: i32 = 0;
+    let mut output: String = String::new();
+    for x in permission.chars() {
+        // match the current char
+        i = i + 1;
+        match i {
+            1 => {
+                output.push(if x == '1' {'r'} else {'-'});
+            }
+            2 => {
+                output.push(if x == '1' {'w'} else {'-'});
+            }
+            _ => {
+                output.push(if x == '1' {'x'} else {'-'});
+                i = 0; 
+            }
+        };
+    }
+    return output;
 }
