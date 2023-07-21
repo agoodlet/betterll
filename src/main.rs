@@ -12,25 +12,26 @@ struct Dir {
     files: Vec<FileEntry>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct FileEntry {
     file_path: String,
-    meta: Metadata
+    meta: Metadata,
+    file_size: u64
 }
 
 impl FileEntry {
     fn new(path: &String) -> FileEntry {
-        let meta = fs::metadata(&path); 
+        let meta = fs::metadata(&path).unwrap(); 
 
         FileEntry {
             file_path: path.to_string(),
-            meta: meta.unwrap()
+            meta: meta.clone(),
+            file_size: meta.len()  
         }
     }
 
     fn display_permissions(&self) -> String {
-        let permissions_decimal = self.meta.permissions().mode();
-        let mut permissions_string = String::from(format!("{:b}", &permissions_decimal));
+        let mut permissions_string = String::from(format!("{:b}", self.meta.permissions().mode()));
         permissions_string = permissions_string[permissions_string.len() - 9..].to_string();
 
         let mut i: i32 = 0;
@@ -70,7 +71,7 @@ fn main() -> io::Result<()> {
 
     let cwd = Dir {
         path: env::current_dir().unwrap().display().to_string(),
-        files: files_list     
+        files: files_list.clone()     
     };
 
     printc!("Current Dir: ", green);
@@ -80,8 +81,8 @@ fn main() -> io::Result<()> {
     for file in cwd.files {
         print!("{} ", file.display_permissions());
 
-        let file_size = &file.meta.len();
-        print!("{:<width$} ", file_size, width=file_size.to_string().len() + 2);
+        let column_width = files_list.iter().max_by_key(|s| s.file_size);
+        print!("{:<width$} ", file.file_size, width=column_width.unwrap().file_size.to_string().len());
     
         if parsed_args.show_owner {
             let text = "Owner";
