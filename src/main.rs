@@ -3,6 +3,9 @@ use std::{fs, env, io, fs::Metadata, os::unix::prelude::PermissionsExt};
 mod colors;
 use colors::Colors;
 
+mod args;
+use args::CommandLineArgs;
+
 #[derive(Debug)]
 struct Dir {
     path: String,
@@ -25,8 +28,8 @@ impl FileEntry {
         }
     }
 
-    fn translate_binary_permission(file: &FileEntry)  -> String {
-        let permissions_decimal = file.meta.permissions().mode();
+    fn display_permissions(&self) -> String {
+        let permissions_decimal = self.meta.permissions().mode();
         let mut permissions_string = String::from(format!("{:b}", &permissions_decimal));
         permissions_string = permissions_string[permissions_string.len() - 9..].to_string();
 
@@ -54,6 +57,9 @@ impl FileEntry {
 
 fn main() -> io::Result<()> {
 
+    let args: Vec<String> = env::args().collect();
+    let parsed_args = CommandLineArgs::new(&args);
+
     let files = fs::read_dir(".")?.map(|res| res.map(|e| e.path())).collect::<Result<Vec<_>, io::Error>>()?;
     let mut files_list: Vec<FileEntry> = Vec::new();
 
@@ -72,11 +78,21 @@ fn main() -> io::Result<()> {
 
     printlnc!("Files in Dir:",  l_blue);
     for file in cwd.files {
-        print!("{} ", FileEntry::translate_binary_permission(&file));
+        print!("{} ", file.display_permissions());
 
         let file_size = &file.meta.len();
         print!("{:>width$} ", file_size, width=6);
-        
+    
+        if parsed_args.show_owner {
+            let text = "Owner";
+            print!("{}", format!("{:^width$}", text, width = text.len() + 2));
+        }
+
+        if parsed_args.show_last_modified {
+            let text = "last_modified";
+            print!("{}", format!("{:^width$}", text, width = text.len() + 2));
+        }
+
         let is_dir = file.meta.is_dir();
         if is_dir {
             printlnc!(&file.file_path, purple);
@@ -85,8 +101,6 @@ fn main() -> io::Result<()> {
         }
 
     }
-    
-
     Ok(())
 }
 
