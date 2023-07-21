@@ -81,7 +81,7 @@ fn main() -> io::Result<()> {
         print!("{} ", file.display_permissions());
 
         let file_size = &file.meta.len();
-        print!("{:>width$} ", file_size, width=6);
+        print!("{:<width$} ", file_size, width=file_size.to_string().len() + 2);
     
         if parsed_args.show_owner {
             let text = "Owner";
