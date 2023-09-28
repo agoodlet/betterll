@@ -20,7 +20,7 @@ struct FileEntry {
 }
 
 impl FileEntry {
-    fn new(path: &String) -> FileEntry {
+    fn new(path: &str) -> FileEntry {
         let meta = fs::metadata(&path).unwrap(); 
 
         FileEntry {
@@ -34,23 +34,16 @@ impl FileEntry {
         let mut permissions_string = String::from(format!("{:b}", self.meta.permissions().mode()));
         permissions_string = permissions_string[permissions_string.len() - 9..].to_string();
 
-        let mut i: i32 = 0;
-        let mut output: String = String::new();
-        for x in permissions_string.chars() {
-            // match the current char
-            i = i + 1;
-            match i {
-                1 => {
-                    output.push(if x == '1' {'r'} else {'-'});
-                }
-                2 => {
-                    output.push(if x == '1' {'w'} else {'-'});
-                }
-                _ => {
-                    output.push(if x == '1' {'x'} else {'-'});
-                    i = 0; 
-                }
-            };
+        let mut output: String = String::from("rwxrwxrwx");
+        for (i,x) in permissions_string.chars().enumerate() {
+            if x == '0'{
+                output
+                    .replace_range(output
+                                   .char_indices()
+                                   .nth(i)
+                                   .map(|(pos, ch)| (pos..pos + ch.len_utf8()))
+                                   .unwrap(), "-");
+            }
         }
         return output;
     }
