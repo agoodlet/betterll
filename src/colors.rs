@@ -35,6 +35,16 @@ macro_rules! printlnc {
     };
 }
 
+#[macro_export]
+macro_rules! formatc {
+    ($string: expr, $color: ident) => {
+        {
+            let colors = Colors::new();
+            format!("{}{}{}", colors.$color , $string, colors.clear)
+        }
+    };
+}
+
 // non new line macro, might be better to check for optional arg that clears the color at a
 // desired location
 #[macro_export]
