@@ -156,7 +156,7 @@ fn main() -> io::Result<()> {
     }
     println!("{}", print);
 
-    output.draw();
+    // output.draw();
     Ok(())
 }
 
