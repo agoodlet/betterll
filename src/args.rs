@@ -15,12 +15,6 @@ impl CommandLineArgs {
         // Skip the first argument, which is the program name itself
         let mut iter = args.iter().skip(1);
 
-        // if the first arg doesn't start with "-" we want to take it as the file path 
-        // otherwise we want to leave this as a blank string 
-//         if let Some(file_path) = args.get(1) {
-//             let file_path = &args[1];
-//         }
-// println!("{}", file_path);
         while let Some(arg) = iter.next() {
             match arg.as_str() {
                 "-o" => {

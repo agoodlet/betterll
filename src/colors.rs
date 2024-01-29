@@ -1,3 +1,5 @@
+use std::fmt::Write;
+
 #[allow(dead_code, unused_variables)] 
 pub struct Colors {
     pub black: String,
@@ -40,7 +42,9 @@ macro_rules! formatc {
     ($string: expr, $color: ident) => {
         {
             let colors = Colors::new();
-            format!("{}{}{}", colors.$color , $string, colors.clear)
+            let mut out: String = String::new();
+            write!(out, "{}{}{}", colors.$color, $string, colors.clear).unwrap();
+            out
         }
     };
 }
