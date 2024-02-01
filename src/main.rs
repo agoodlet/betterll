@@ -1,4 +1,4 @@
-use std::{fs, env, io, fs::Metadata, os::unix::prelude::PermissionsExt, path::PathBuf, fmt::Write};
+use std::{fs, env, io, fs::Metadata, os::unix::prelude::PermissionsExt, path::PathBuf};
 
 mod colors;
 use colors::Colors;
@@ -9,9 +9,6 @@ use args::CommandLineArgs;
 // TODO
 // - Add symlink following
 // - change color for executable files
-// - seperate draw functionality from processing
-//      - maybe create a struct that holds _all_ the data
-//      and then implement a function for it that draws it all to terminal
 
 #[cfg(unix)]
 mod permissions {
@@ -86,13 +83,51 @@ struct Output {
      column_width: usize,
 }
 
-// impl Output {
-//     fn draw(&self) {
-//         printlnc!("idk lol", green);
-//
-//         printlnc!(self.dir.path, green);
-//     }
-// }
+impl Output {
+    fn draw(&self) {
+
+        let mut print: String;
+        // change to Str::push
+        // formatc is now using push_str under the hood so I think this is fine
+        // should I just also pass in an "append" string for this macro?
+        //      - so that I don't have to pass it into push_str later 
+        print = formatc!("Current Dir: ", green);
+        print.push_str(&self.dir.path);
+        print.push_str("\n");
+
+        print.push_str(&formatc!("Files in Dir:", l_blue));
+        print.push_str("\n");
+
+        for file in &self.dir.files {
+            print.push_str(&file.get_permissions());
+            // idk if I can be bothered moving this to a push and I don't know if it's worth it
+            // as I would have to calculate the padding on the string before pushing it so I think that
+            // it might just end up being better to format in these places and hope the performance
+            // gained with the other pushes is enough
+            print = format!("{} {:<width$} ", print, file.file_size, width=self.column_width);
+        
+
+            if self.show_owner {
+                print = format!("{}{}", print, format!("{:^width$}", file.owner, width = file.owner.len() + 2));
+            }
+
+            if self.show_last_modified {
+                print = format!("{}{}", print, format!("{:^width$}", file.last_modified, width = file.last_modified.len() + 2));
+            }
+
+            if file.is_dir {
+                print.push_str(&formatc!(&file.file_path, d_blue));
+                print.push_str("\n");
+            } else {
+                print.push_str(&file.file_path);
+                print.push_str("\n");
+            }
+        }
+
+        println!("{}", print);
+
+    }
+}
 
 fn main() -> io::Result<()> {
     let mut file_path = ".".to_string();
@@ -128,35 +163,8 @@ fn main() -> io::Result<()> {
         output.dir.files.push(f); 
     }
     output.column_width = max_width;
-
-    let mut print: String;
-
-    print = formatc!("Current Dir: ", green);
-    print = format!("{}{}\n", print, &output.dir.path);
-
-    print = format!("{}{}\n", print, formatc!("Files in Dir:",  l_blue));
-
-    for file in &output.dir.files {
-        print = format!("{}{} {:<width$} ", print, file.get_permissions(), file.file_size, width=output.column_width);
     
-
-        if output.show_owner {
-            print = format!("{}{}", print, format!("{:^width$}", file.owner, width = file.owner.len() + 2));
-        }
-
-        if output.show_last_modified {
-            print = format!("{}{}", print, format!("{:^width$}", file.last_modified, width = file.last_modified.len() + 2));
-        }
-
-        if file.is_dir {
-            print = format!("{}{}\n", print, formatc!(&file.file_path, d_blue));
-        } else {
-            print = format!("{}{}\n", print, &file.file_path);
-        }
-    }
-    println!("{}", print);
-
-    // output.draw();
+    output.draw();
     Ok(())
 }
 

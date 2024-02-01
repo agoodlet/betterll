@@ -1,5 +1,3 @@
-use std::fmt::Write;
-
 #[allow(dead_code, unused_variables)] 
 pub struct Colors {
     pub black: String,
@@ -37,16 +35,30 @@ macro_rules! printlnc {
     };
 }
 
+// #[macro_export]
+// macro_rules! formatc {
+//     ($string: expr, $color: ident) => {
+//         {
+//             let colors = Colors::new();
+//             let mut out: String = String::new();
+//             write!(out, "{}{}{}", colors.$color, $string, colors.clear).unwrap();
+//             out
+//         }
+//     };
+// }
+
 #[macro_export]
 macro_rules! formatc {
     ($string: expr, $color: ident) => {
         {
             let colors = Colors::new();
             let mut out: String = String::new();
-            write!(out, "{}{}{}", colors.$color, $string, colors.clear).unwrap();
+            out.push_str(&colors.$color);
+            out.push_str($string);
+            out.push_str(&colors.clear);
             out
         }
-    };
+    }
 }
 
 // non new line macro, might be better to check for optional arg that clears the color at a
