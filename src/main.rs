@@ -87,7 +87,6 @@ impl Output {
     fn draw(&self) {
 
         let mut print: String;
-        // change to Str::push
         // formatc is now using push_str under the hood so I think this is fine
         // should I just also pass in an "append" string for this macro?
         //      - so that I don't have to pass it into push_str later 
