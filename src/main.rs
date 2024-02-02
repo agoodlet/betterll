@@ -149,6 +149,8 @@ fn main() -> io::Result<()> {
         column_width: 0,
     };
 
+
+    //I still don't like that I'm looping through the files twice here
     let files = fs::read_dir(&output.dir.path)?
         .map(|res| res.map(|e| e.path()))
         .collect::<Result<Vec<_>, io::Error>>()?;
