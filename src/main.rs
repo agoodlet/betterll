@@ -1,4 +1,4 @@
-use std::{fs, env, io, fs::Metadata, os::unix::prelude::PermissionsExt, path::PathBuf};
+use std::{fs, env, io, fs::Metadata, os::unix::prelude::PermissionsExt, path::PathBuf, error::Error, fmt};
 
 mod colors;
 use colors::Colors;
@@ -42,18 +42,55 @@ struct FileEntry {
     last_modified: String,
 }
 
-impl FileEntry {
-    fn new(file: PathBuf) -> Self {
-        let meta = fs::metadata(file.display().to_string()).unwrap(); 
-        let is_dir = meta.is_dir();
 
-        FileEntry {
-            file_path: file.file_name().unwrap().to_ascii_lowercase().into_string().unwrap(),
-            meta: meta.clone(),
-            file_size: meta.len(),
-            is_dir,
-            owner: "test".to_string(),
-            last_modified: "test".to_string(),
+// idk it's an error lol
+#[derive(Debug)]
+struct MetaNotFoundError {
+    details: String,
+}
+
+impl MetaNotFoundError {
+    fn new(msg: &str) -> Self {
+        MetaNotFoundError{ details: msg.to_string() }
+    } 
+}
+
+impl fmt::Display for MetaNotFoundError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.details)
+    }
+}
+
+impl Error for MetaNotFoundError {
+    fn description(&self) -> &str {
+        &self.details
+    }
+}
+
+impl FileEntry {
+    // need to find out why I'm getting a result for .steampath here when I don't seem to have
+    // that in my home Dir
+    fn new(file: PathBuf) -> Result<Self, MetaNotFoundError> {
+        match fs::metadata(file.display().to_string()){
+            Ok(meta) => {
+                let is_dir = meta.is_dir();
+
+                Ok(
+                    FileEntry {
+                        file_path: file.file_name().unwrap().to_ascii_lowercase().into_string().unwrap(),
+                        meta: meta.clone(),
+                        file_size: meta.len(),
+                        is_dir,
+                        owner: "test".to_string(),
+                        last_modified: "test".to_string(),
+                    }
+                )
+            }
+            Err(_err) => {
+                //
+                let msg: String = format!("Can't resolve file meta for: {}", &file.display().to_string());
+                return Err(MetaNotFoundError::new(&msg))
+            }
         }
     }
 
@@ -157,15 +194,23 @@ fn main() -> io::Result<()> {
 
     let mut max_width = 0;
     for file in files{
-        let f: FileEntry = FileEntry::new(file);
-        if f.file_size.to_string().len() > max_width {
-            max_width = f.file_size.to_string().len() as usize;
-        }
-        output.dir.files.push(f); 
+        // if we get back a MetaNotFoundError from the new function we just wanna skip it for now 
+        match FileEntry::new(file){
+            Ok(f) => { 
+                    if f.file_size.to_string().len() > max_width {
+                    max_width = f.file_size.to_string().len() as usize;
+                }
+                output.dir.files.push(f); 
+            }
+            Err(err) => {
+                error!(err);
+            }
+        };
     }
     output.column_width = max_width;
     
     output.draw();
+
+
     Ok(())
 }
-
