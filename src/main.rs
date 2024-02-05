@@ -1,4 +1,4 @@
-use std::{fs, env, io, fs::Metadata, os::unix::prelude::PermissionsExt, path::PathBuf, error::Error, fmt};
+use std::{fs, env, io, fs::Metadata, os::unix::prelude::PermissionsExt, path::PathBuf, error::Error, fmt, fmt::Write};
 
 mod colors;
 use colors::Colors;
@@ -7,8 +7,13 @@ mod args;
 use args::CommandLineArgs;
 
 // TODO
-// - Add symlink following
-// - change color for executable files
+// - add better coloring for file entries
+// - add no colour flag
+// - add outputs
+//  - table
+//  - json
+//      -I'll just use serde for this, fuck writing a json serializer
+// - direct ingestion thing Ben said about 
 
 #[cfg(unix)]
 mod permissions {
@@ -68,30 +73,59 @@ impl Error for MetaNotFoundError {
 }
 
 impl FileEntry {
-    // need to find out why I'm getting a result for .steampath here when I don't seem to have
-    // that in my home Dir
     fn new(file: PathBuf) -> Result<Self, MetaNotFoundError> {
-        match fs::metadata(file.display().to_string()){
-            Ok(meta) => {
-                let is_dir = meta.is_dir();
+        if file.is_symlink() {
+            match fs::symlink_metadata(file.display().to_string()){
+                Ok(meta) => {
+                    let mut file_path: String = file.read_link().unwrap().file_name().unwrap().to_ascii_lowercase().into_string().unwrap();
+                    let link: String = file.file_name().unwrap().to_ascii_lowercase().into_string().unwrap();
+                    write!(file_path, " -> {}", link).unwrap();
 
-                Ok(
-                    FileEntry {
-                        file_path: file.file_name().unwrap().to_ascii_lowercase().into_string().unwrap(),
-                        meta: meta.clone(),
-                        file_size: meta.len(),
-                        is_dir,
-                        owner: "test".to_string(),
-                        last_modified: "test".to_string(),
-                    }
-                )
+                    let is_dir = meta.is_dir();
+                    
+                    Ok(
+                        FileEntry {
+                            file_path,
+                            meta: meta.clone(),
+                            file_size: meta.len(),
+                            is_dir,
+                            owner: "test".to_string(),
+                            last_modified: "test".to_string(),
+                        }
+                    )
+                }
+                Err(_err) => {
+                    //
+                    let msg: String = format!("Can't resolve file meta for: {}", &file.display().to_string());
+                    return Err(MetaNotFoundError::new(&msg))
+                }
             }
-            Err(_err) => {
-                //
-                let msg: String = format!("Can't resolve file meta for: {}", &file.display().to_string());
-                return Err(MetaNotFoundError::new(&msg))
+        } else {
+            match fs::metadata(file.display().to_string()){
+                Ok(meta) => {
+                    let file_path: String = file.file_name().unwrap().to_ascii_lowercase().into_string().unwrap();
+
+                    let is_dir = meta.is_dir();
+                    
+                    Ok(
+                        FileEntry {
+                            file_path,
+                            meta: meta.clone(),
+                            file_size: meta.len(),
+                            is_dir,
+                            owner: "test".to_string(),
+                            last_modified: "test".to_string(),
+                        }
+                    )
+                }
+                Err(_err) => {
+                    //
+                    let msg: String = format!("Can't resolve file meta for: {}", &file.display().to_string());
+                    return Err(MetaNotFoundError::new(&msg))
+                }
             }
         }
+
     }
 
     fn get_permissions(&self) -> String {
