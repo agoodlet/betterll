@@ -1,4 +1,3 @@
-// Define a struct to hold the parsed command-line arguments
 pub struct CommandLineArgs {
     pub show_owner: bool,
     pub show_last_modified: bool,
@@ -8,7 +7,6 @@ pub struct CommandLineArgs {
 }
 
 impl CommandLineArgs {
-    // Function to parse the command-line arguments and return the struct
    pub fn new(args: &[String]) -> CommandLineArgs {
         let mut show_owner = false;
         let mut show_last_modified = false;
@@ -38,13 +36,6 @@ impl CommandLineArgs {
                 }
                 _ => {
                     eprintln!("Error: Unknown argument '{}'", arg);
-                    return CommandLineArgs {
-                        show_owner: false,
-                        show_last_modified: false,
-                        colour: true,
-                        help: false,
-                        version: false,
-                    };
                 }
             }
         }

@@ -78,7 +78,7 @@ impl Error for MetaNotFoundError {
 }
 
 impl FileEntry {
-    fn new(file: PathBuf) -> Result<Self, MetaNotFoundError> {
+    fn from(file: PathBuf) -> Result<Self, MetaNotFoundError> {
         if file.is_symlink() {
             match fs::symlink_metadata(file.display().to_string()){
                 Ok(meta) => {
@@ -287,7 +287,7 @@ fn main() -> io::Result<()> {
 
     let _files = fs::read_dir(&output.dir.path)?
         .map(|res| res.map(
-                |e| match FileEntry::new(e.path()){
+                |e| match FileEntry::from(e.path()){
                         Ok(f) => { 
                             if f.file_size.to_string().len() > max_width {
                             max_width = f.file_size.to_string().len() as usize;
