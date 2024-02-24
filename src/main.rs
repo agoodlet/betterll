@@ -8,12 +8,17 @@ use args::CommandLineArgs;
 
 // TODO
 // - add better coloring for file entries
-// - add no colour flag
 // - add outputs
 //  - table
 //  - json
 //      -I'll just use serde for this, fuck writing a json serializer
 // - direct ingestion thing Ben said about 
+// add a max height
+//  - after we hit the max height we should break out into a second column
+//  - will need to get the height of the terminal
+    //  - if the amount of entries is greater than the height of the terminal
+    //  - start printing in the next column
+    //      - might need to build in a reactive rendering system
 
 #[cfg(unix)]
 mod permissions {
@@ -155,7 +160,7 @@ struct Output {
 }
 
 impl Output {
-    fn draw(&self) {
+    fn draw_colour(&self) {
 
         let mut print: String;
         // formatc is now using push_str under the hood so I think this is fine
@@ -197,6 +202,52 @@ impl Output {
         println!("{}", print);
 
     }
+
+    fn draw_no_colour(&self) {
+
+        let mut print: String = "Current Dir: ".to_string();
+
+        print.push_str(&self.dir.path);
+        print.push_str("\n");
+
+        print.push_str("Files in Dir:");
+        print.push_str("\n");
+
+        for file in &self.dir.files {
+            print.push_str(&file.get_permissions());
+            // idk if I can be bothered moving this to a push and I don't know if it's worth it
+            // as I would have to calculate the padding on the string before pushing it so I think that
+            // it might just end up being better to format in these places and hope the performance
+            // gained with the other pushes is enough
+            print = format!("{} {:<width$} ", print, file.file_size, width=self.column_width);
+        
+
+            if self.show_owner {
+                print = format!("{}{}", print, format!("{:^width$}", file.owner, width = file.owner.len() + 2));
+            }
+
+            if self.show_last_modified {
+                print = format!("{}{}", print, format!("{:^width$}", file.last_modified, width = file.last_modified.len() + 2));
+            }
+
+            print.push_str(&file.file_path);
+            print.push_str("\n");
+        }
+
+        println!("{}", print);
+
+    }
+
+    fn print_help() {
+        let output: &str = "Usage: betterll [file path] [flags]\n\
+            Flags:\n\
+            -c: Disables coloured output\n\
+            -o: Shows the owner of the file\n\
+            -m: Shows the last modified date of the file\n\
+            -h: show this help menu\n";
+
+        print!("{}", output);
+    }
 }
 
 fn main() -> io::Result<()> {
@@ -210,6 +261,11 @@ fn main() -> io::Result<()> {
     }
     let parsed_args = CommandLineArgs::new(&args);
 
+    if parsed_args.help {
+        Output::print_help();
+        return Ok(())
+    }
+
     let mut output = Output {
         dir: Dir {
             path: file_path,
@@ -219,7 +275,6 @@ fn main() -> io::Result<()> {
         show_last_modified: parsed_args.show_last_modified,
         column_width: 0,
     };
-
 
     //I still don't like that I'm looping through the files twice here
     let files = fs::read_dir(&output.dir.path)?
@@ -243,8 +298,12 @@ fn main() -> io::Result<()> {
     }
     output.column_width = max_width;
     
-    output.draw();
-
+    if parsed_args.colour {
+        output.draw_colour();
+    } else {
+        output.draw_no_colour();
+    }
 
     Ok(())
 }
+
