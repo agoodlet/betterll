@@ -239,14 +239,16 @@ impl Output {
     }
 
     fn print_help() {
-        let output: &str = "Usage: betterll [file path] [flags]\n\
+        print!("Usage: betterll [file path] [flags]\n\
             Flags:\n\
             -c: Disables coloured output\n\
             -o: Shows the owner of the file\n\
             -m: Shows the last modified date of the file\n\
-            -h: show this help menu\n";
+            -h: show this help menu\n");
+    }
 
-        print!("{}", output);
+    fn print_version() {
+        print!("betterll version: {}\n", env!("CARGO_PKG_VERSION"));
     }
 }
 
@@ -265,6 +267,11 @@ fn main() -> io::Result<()> {
         Output::print_help();
         return Ok(())
     }
+    
+    if parsed_args.version {
+        Output::print_version();
+        return Ok(())
+    }
 
     let mut output = Output {
         dir: Dir {
@@ -276,26 +283,24 @@ fn main() -> io::Result<()> {
         column_width: 0,
     };
 
-    //I still don't like that I'm looping through the files twice here
-    let files = fs::read_dir(&output.dir.path)?
-        .map(|res| res.map(|e| e.path()))
+    let mut max_width = 0;
+
+    let _files = fs::read_dir(&output.dir.path)?
+        .map(|res| res.map(
+                |e| match FileEntry::new(e.path()){
+                        Ok(f) => { 
+                            if f.file_size.to_string().len() > max_width {
+                            max_width = f.file_size.to_string().len() as usize;
+                            }
+                            output.dir.files.push(f); 
+                        }
+                        Err(err) => {
+                            error!(err);
+                        }
+                    }
+                ))
         .collect::<Result<Vec<_>, io::Error>>()?;
 
-    let mut max_width = 0;
-    for file in files{
-        // if we get back a MetaNotFoundError from the new function we just wanna skip it for now 
-        match FileEntry::new(file){
-            Ok(f) => { 
-                    if f.file_size.to_string().len() > max_width {
-                    max_width = f.file_size.to_string().len() as usize;
-                }
-                output.dir.files.push(f); 
-            }
-            Err(err) => {
-                error!(err);
-            }
-        };
-    }
     output.column_width = max_width;
     
     if parsed_args.colour {
