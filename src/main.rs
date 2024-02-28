@@ -11,7 +11,7 @@ use args::CommandLineArgs;
 // - add outputs
 //  - table
 //  - json
-//      -I'll just use serde for this, fuck writing a json serializer
+//      - I'll just use serde for this, fuck writing a json serializer
 // - direct ingestion thing Ben said about 
 // add a max height
 //  - after we hit the max height we should break out into a second column
@@ -52,7 +52,6 @@ struct FileEntry {
     last_modified: String,
 }
 
-
 // idk it's an error lol
 #[derive(Debug)]
 struct MetaNotFoundError {
@@ -82,8 +81,18 @@ impl FileEntry {
         if file.is_symlink() {
             match fs::symlink_metadata(file.display().to_string()){
                 Ok(meta) => {
-                    let mut file_path: String = file.read_link().unwrap().file_name().unwrap().to_ascii_lowercase().into_string().unwrap();
-                    let link: String = file.file_name().unwrap().to_ascii_lowercase().into_string().unwrap();
+                    let mut file_path: String = file.read_link()
+                        .unwrap()
+                        .file_name()
+                        .unwrap()
+                        .to_ascii_lowercase()
+                        .into_string()
+                        .unwrap();
+                    let link: String = file.file_name()
+                        .unwrap()
+                        .to_ascii_lowercase()
+                        .into_string()
+                        .unwrap();
                     write!(file_path, " -> {}", link).unwrap();
 
                     let is_dir = meta.is_dir();
@@ -100,7 +109,6 @@ impl FileEntry {
                     )
                 }
                 Err(_err) => {
-                    //
                     let msg: String = format!("Can't resolve file meta for: {}", &file.display().to_string());
                     return Err(MetaNotFoundError::new(&msg))
                 }
@@ -108,7 +116,11 @@ impl FileEntry {
         } else {
             match fs::metadata(file.display().to_string()){
                 Ok(meta) => {
-                    let file_path: String = file.file_name().unwrap().to_ascii_lowercase().into_string().unwrap();
+                    let file_path: String = file.file_name()
+                        .unwrap()
+                        .to_ascii_lowercase()
+                        .into_string()
+                        .unwrap();
 
                     let is_dir = meta.is_dir();
                     
@@ -124,7 +136,6 @@ impl FileEntry {
                     )
                 }
                 Err(_err) => {
-                    //
                     let msg: String = format!("Can't resolve file meta for: {}", &file.display().to_string());
                     return Err(MetaNotFoundError::new(&msg))
                 }
