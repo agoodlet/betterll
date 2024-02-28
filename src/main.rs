@@ -296,7 +296,6 @@ fn main() -> io::Result<()> {
 
     let mut max_width = 0;
 
-<<<<<<< HEAD
     let _files = fs::read_dir(&output.dir.path)?
         .map(|res| res.map(
                 |e| match FileEntry::from(e.path()){
@@ -311,11 +310,6 @@ fn main() -> io::Result<()> {
                         }
                     }
                 ))
-=======
-    //I still don't like that I'm looping through the files twice her e
-    let files = fs::read_dir(&output.dir.path)?
-        .map(|res| res.map(|e| e.path()))
->>>>>>> a7221ec (test)
         .collect::<Result<Vec<_>, io::Error>>()?;
 
     output.column_width = max_width;
